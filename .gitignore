@@ -1,0 +1,8 @@
+.venv-build/
+.build-tools/
+build/
+dist/*
+!dist/MD Converter.exe
+release/
+__pycache__/
+*.pyc
