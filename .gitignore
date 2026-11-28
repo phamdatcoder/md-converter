@@ -4,5 +4,6 @@ build/
 dist/*
 !dist/MD Converter.exe
 release/
+/pdf_test/
 __pycache__/
 *.pyc

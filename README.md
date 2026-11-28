@@ -30,11 +30,22 @@ Mục tiêu đóng gói: **chỉ một file `dist/MD Converter.exe`**, chạy tr
   HTML/style để hiển thị màu. Bộ đọc PDF, DOC/XLS cũ và RTF chưa giữ màu/gạch bỏ.
   PPTX hỗ trợ màu run/đoạn trực tiếp; Excel đọc font ô và rich text, không tính
   màu từ conditional formatting. Chưa xử lý CSS ngoài/class của HTML.
-- PDF ưu tiên trích xuất theo dòng trên trang. Các dòng văn bản liên tiếp dùng
-  ngắt dòng cứng Markdown (`\` cuối dòng), để trình đọc không gộp lại thành một
-  đoạn. Ô bảng có nhiều dòng dùng `<br>` và giữ nguyên cấu trúc hàng/cột. Giữ
-  phát hiện form không viền và fallback của engine; thứ tự đọc PDF nhiều cột
-  vẫn có thể cần kiểm tra thủ công. Đây không phải tái tạo bố cục trang in.
+- PDF nhận diện cấp đề mục bằng bookmark và trang đích trong tài liệu; khi thiếu
+  bookmark, suy luận từ cỡ chữ so với font nội dung. Ghép tiêu đề bị xuống dòng,
+  tách đoạn theo khoảng cách dòng, giữ chữ đậm/nghiêng và inline code. Khối code
+  dùng font monospace được xuất thành fenced code với thụt lề tương đối.
+- Chỉ dựng bảng PDF khi có nhiều hàng/cột có nội dung; khung nền một cột và
+  khối code không bị biến thành bảng. Ô nhiều dòng dùng `<br>`. Phát hiện form
+  không viền chỉ áp dụng cho PDF không có tín hiệu đề mục/code và phải giữ đủ
+  số ký tự chữ/số của trang. Đầu/cuối trang lặp lại được giữ trong comment
+  `PDF header` / `PDF footer`; comment `PDF page` ghi số trang để đối chiếu.
+- Hình raster trong PDF được dựng lại theo vùng ảnh và nhúng PNG vào cuối file
+  Markdown bằng data URI; vị trí hình có tham chiếu tương ứng. Trình đọc phải
+  cho phép data URI để hiện ảnh; vùng xem trước trong app vẫn là mã Markdown.
+  Ảnh nhúng làm file lớn hơn, chưa chuyển chữ trong ảnh thành văn bản tìm kiếm.
+  Trang không có lớp chữ được giữ và ghi cảnh báo cần OCR. Chưa nhận diện đầy
+  đủ sơ đồ vector, link, màu chữ PDF hoặc thứ tự đọc nhiều cột. Đây không phải
+  tái tạo bố cục trang in. Khi dùng engine dự phòng, đầu file có cảnh báo.
 - **Dừng** và đóng cửa sổ khi đang chạy đều chờ file hiện tại hoàn tất trước
   khi ngừng, giữ những kết quả đã lưu.
 
@@ -45,7 +56,7 @@ Mục tiêu đóng gói: **chỉ một file `dist/MD Converter.exe`**, chạy tr
 | Word | `.docx` | Chuyển văn bản, tiêu đề, danh sách, bảng bằng MarkItDown |
 | Word cũ | `.doc` | Word 97–2003 không mã hóa; trích xuất văn bản chính, không giữ style/hình ảnh. RTF mang đuôi DOC cũng được đọc |
 | Excel | `.xlsx`, `.xls` | Đọc các sheet thành Markdown |
-| PDF | `.pdf` | Cần có lớp chữ; chưa tích hợp OCR cho bản scan |
+| PDF | `.pdf` | Khôi phục đề mục/code/bảng từ lớp chữ, giữ hình raster; chưa tích hợp OCR |
 | PowerPoint | `.pptx` | Không hỗ trợ định dạng `.ppt` cũ |
 | Trang web lưu trên máy | `.html`, `.htm`, `.xhtml` | Chuyển sang Markdown |
 | Văn bản và dữ liệu | `.txt`, `.csv`, `.tsv`, `.json`, `.xml`, `.rtf` | Đầu ra UTF-8 |
@@ -117,7 +128,15 @@ repo không đồng nghĩa EXE đã được build hoặc kiểm tra thành côn
 .\.venv-build\Scripts\python.exe -m unittest discover -s tests -v
 .\.venv-build\Scripts\python.exe tools/check_gui.py
 .\.venv-build\Scripts\python.exe app.py --self-test --fixtures markitdown-main/packages/markitdown/tests/test_files --report .build-tools/manual-smoke.json
+.\.venv-build\Scripts\python.exe tools/check_pdf_samples.py --input pdf_test --output pdf_test/Markdown_checked
 ```
+
+`check_pdf_samples.py` yêu cầu folder đầu ra mới, xuất các file Markdown và
+`verification.json` với thống kê từng trang: đề mục từ bookmark/font, code,
+bảng, ảnh, header/footer, cảnh báo OCR và ký tự chữ/số có thể bị thiếu. Script
+kiểm tra SHA-256 để xác nhận PDF gốc không bị sửa. So sánh lượng ký tự theo
+trang chỉ phát hiện một số trường hợp mất chữ; không chứng minh đúng thứ tự
+đọc hay đầy đủ ngữ nghĩa, và không kiểm chứng chữ nằm trong hình.
 
 Unit test của batch và parser DOC chỉ dùng thư viện chuẩn; có thể chạy khi chưa
 cài MarkItDown. Smoke test cần toàn bộ dependency để kiểm tra các converter
